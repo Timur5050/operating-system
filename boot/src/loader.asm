@@ -84,6 +84,7 @@ End:
     hlt
     jmp End
 
+
 [BITS 32]
 PMEntry:
     mov ax,0x10
@@ -92,14 +93,51 @@ PMEntry:
     mov ss,ax
     mov esp,0x7c00
 
-    mov byte[0xb8000],'P'
-    mov byte[0xb8001],0xa
+    cld
+    mov edi,0x70000
+    xor eax,eax
+    mov ecx,0x10000/4
+    rep stosd
+    
+    mov dword[0x70000],0x71007
+    mov dword[0x71000],10000111b
+
+    lgdt [Gdt64Ptr]
+
+    mov eax,cr4
+    or eax,(1<<5)
+    mov cr4,eax
+
+    mov eax,0x70000
+    mov cr3,eax
+
+    mov ecx,0xc0000080
+    rdmsr
+    or eax,(1<<8)
+    wrmsr
+
+    mov eax,cr0
+    or eax,(1<<31)
+    mov cr0,eax
+
+    jmp 8:LMEntry
 
 PEnd:
     hlt
     jmp PEnd
-    
 
+[BITS 64]
+LMEntry:
+    mov rsp,0x7c00
+
+    mov byte[0xb8000],'L'
+    mov byte[0xb8001],0xa
+
+LEnd:
+    hlt
+    jmp LEnd
+    
+    
 
 DriveId:    db 0
 ReadPacket: times 16 db 0
@@ -128,3 +166,14 @@ Gdt32Ptr: dw Gdt32Len-1
 
 Idt32Ptr: dw 0
           dd 0
+
+
+Gdt64:
+    dq 0
+    dq 0x0020980000000000
+
+Gdt64Len: equ $-Gdt64
+
+
+Gdt64Ptr: dw Gdt64Len-1
+          dd Gdt64
