@@ -89,8 +89,9 @@ KernelEntry:
     mov ss,ax
     
     mov rsp,0x200000
-    call KMain
     sti
+    call KMain
+    
 End:
     hlt
     jmp End
