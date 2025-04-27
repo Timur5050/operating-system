@@ -33,21 +33,24 @@ GetMemInfoStart:
     mov eax,0xe820
     mov edx,0x534d4150
     mov ecx,20
-    mov edi,0x9000
+    mov dword[0x9000],0
+    mov edi,0x9008
     xor ebx,ebx
     int 0x15
     jc NotSupport
 
 GetMemInfo:
     add edi,20
+    inc dword[0x9000] 
+    test ebx,ebx
+    jz GetMemDone
+
     mov eax,0xe820
     mov edx,0x534d4150
     mov ecx,20
     int 0x15
-    jc GetMemDone
+    jnc GetMemInfo
 
-    test ebx,ebx
-    jnz GetMemInfo
 
 GetMemDone:
 TestA20:
