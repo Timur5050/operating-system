@@ -24,6 +24,7 @@ global vector39
 global eoi
 global read_isr
 global load_idt
+global load_cr3
 
 Trap:
     push rax
@@ -41,9 +42,6 @@ Trap:
     push r13
     push r14
     push r15
-
-    mov byte[0xb8000], 0x30
-    mov byte[0xb8001], 0xf
 
     mov rdi,rsp
     call handler
@@ -176,5 +174,10 @@ read_isr:
 
 load_idt:
     lidt [rdi]
+    ret
+
+load_cr3:
+    mov rax,rdi
+    mov cr3,rax
     ret
 
