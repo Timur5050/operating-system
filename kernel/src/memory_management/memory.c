@@ -10,6 +10,7 @@ static struct FreeMemRegion free_mem_region[50];
 static struct Page free_memory;
 static uint64_t memory_end;
 extern char end;
+static uint64_t kernel_page_map;
 
 void init_memory(void)
 {
@@ -33,8 +34,9 @@ void init_memory(void)
     for (int i = 0; i < free_region_count; i++) {                  
         uint64_t vstart = P2V(free_mem_region[i].address);
         uint64_t vend = vstart + free_mem_region[i].length;
-
+        printk("end : %x\n", (uint64_t)&end);
         if (vstart > (uint64_t)&end) {
+            
             free_region(vstart, vend);
         } 
         else if (vend > (uint64_t)&end) {
@@ -61,6 +63,11 @@ void kfree(uint64_t v)
     ASSERT(v >= (uint64_t) & end);
     ASSERT(v+PAGE_SIZE <= 0xffff800040000000);
 
+    if(kernel_page_map != 0)
+    {
+        free_pages(kernel_page_map, v, v + PAGE_SIZE);
+    }
+
     struct Page *page_address = (struct Page*)v;
     page_address->next = free_memory.next;
     free_memory.next = page_address;
@@ -76,6 +83,17 @@ void* kalloc(void)
         ASSERT((uint64_t)page_address+PAGE_SIZE <= 0xffff800040000000);
 
         free_memory.next = page_address->next;            
+
+        if(kernel_page_map != 0)
+        {
+            uint64_t vaddr = (uint64_t)page_address;
+            uint64_t paddr = V2P(vaddr);
+            if(!map_pages(kernel_page_map, vaddr, vaddr + PAGE_SIZE, paddr, PTE_P | PTE_W))
+            {
+                return NULL;
+            }
+        }
+
     }
     
     return page_address;
@@ -165,7 +183,7 @@ uint64_t setup_kvm(void)
 
     if (page_map != 0) {
         memset((void*)page_map, 0, PAGE_SIZE);        
-        if (!map_pages(page_map, KERNEL_BASE, memory_end, V2P(KERNEL_BASE), PTE_P|PTE_W)) {
+        if (!map_pages(page_map, KERNEL_BASE, (uint64_t)&end, V2P(KERNEL_BASE), PTE_P|PTE_W)) {
             free_vm(page_map);
             page_map = 0;
         }
@@ -177,6 +195,7 @@ void init_kvm(void)
 {
     uint64_t page_map = setup_kvm();
     ASSERT(page_map != 0);
+    kernel_page_map = page_map;
     switch_vm(page_map);
     printk("memory manager is working now");
 }
