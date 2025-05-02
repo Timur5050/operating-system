@@ -25,6 +25,8 @@ global eoi
 global read_isr
 global load_idt
 global load_cr3
+global pstart
+global read_cr2
 
 Trap:
     push rax
@@ -180,4 +182,12 @@ load_cr3:
     mov rax,rdi
     mov cr3,rax
     ret
+
+read_cr2:
+    mov rax,cr2
+    ret
+
+pstart:
+    mov rsp,rdi
+    jmp TrapReturn
 
