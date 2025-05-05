@@ -8,7 +8,6 @@
 extern struct TSS Tss; 
 static struct Process process_table[NUM_PROC];
 static int pid_num = 1;
-void main(void);
 
 static void set_tss(struct Process *proc)
 {
@@ -36,7 +35,7 @@ static void set_process_entry(struct Process *proc)
     proc->state = PROC_INIT;
     proc->pid = pid_num++;
 
-    proc->stack = (uint64_t)kalloc(); // allocate mem for kernel stack of this proc
+    proc->stack = (uint64_t)kalloc();
     ASSERT(proc->stack != 0);
 
     memset((void*)proc->stack, 0, PAGE_SIZE);   
@@ -51,7 +50,7 @@ static void set_process_entry(struct Process *proc)
     
     proc->page_map = setup_kvm();
     ASSERT(proc->page_map != 0);
-    ASSERT(setup_uvm(proc->page_map, (uint64_t)main, PAGE_SIZE));
+    ASSERT(setup_uvm(proc->page_map, (uint64_t)P2V(0x20000), 5120));
 }
 
 void init_process(void)
@@ -67,10 +66,4 @@ void launch(void)
     set_tss(&process_table[0]);
     switch_vm(process_table[0].page_map);
     pstart(process_table[0].tf);
-}
-
-void main(void)
-{
-    char *p = (char*)0xffff800000200020;
-    *p = 1;
 }
