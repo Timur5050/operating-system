@@ -1,5 +1,6 @@
 #include "trap.h"
 #include "../print_function/print.h"
+#include "../syscalls/syscall.h"
 
 static struct IdtPtr idt_pointer;
 static struct IdtEntry vectors[256];
@@ -35,6 +36,7 @@ void init_idt(void)
     init_idt_entry(&vectors[19],(uint64_t)vector19,0x8e);
     init_idt_entry(&vectors[32],(uint64_t)vector32,0x8e);
     init_idt_entry(&vectors[39],(uint64_t)vector39,0x8e);
+    init_idt_entry(&vectors[0x80],(uint64_t)sysint,0xee);
 
     idt_pointer.limit = sizeof(vectors)-1;
     idt_pointer.addr = (uint64_t)vectors;
@@ -55,6 +57,10 @@ void handler(struct TrapFrame *tf)
             if ((isr_value&(1<<7)) != 0) {
                 eoi();
             }
+            break;
+
+        case 0x80:
+            system_call(tf);
             break;
 
         default:
