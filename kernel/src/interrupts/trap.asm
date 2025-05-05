@@ -21,6 +21,7 @@ global vector18
 global vector19
 global vector32
 global vector39
+global sysint
 global eoi
 global read_isr
 global load_idt
@@ -161,6 +162,11 @@ vector32:
 vector39:
     push 0
     push 39
+    jmp Trap
+
+sysint:
+    push 0
+    push 0x80
     jmp Trap
 
 eoi:
