@@ -69,8 +69,9 @@ static int read_string(char *buffer, int position, const char *string)
     return index;
 }
 
-static void write_screen(const char *buffer, int size, struct ScreenBuffer *sb, char color)
+void write_screen(const char *buffer, int size, char color)
 {
+    struct ScreenBuffer *sb = &screen_buffer;
     int column = sb->column;
     int row = sb->row;
 
@@ -145,7 +146,7 @@ int printk(const char *format, ...)
         }     
     }
 
-    write_screen(buffer, buffer_size, &screen_buffer, 0xf);
+    write_screen(buffer, buffer_size, 0xf);
     va_end(args);
 
     return buffer_size;
